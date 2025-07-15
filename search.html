@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Search</title>
+    <!-- Tailwind CSS CDN for easy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the start to prevent vertical centering issues on smaller content */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            padding: 2rem 1rem; /* Add some padding for overall layout */
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-6 bg-white shadow-lg rounded-xl max-w-4xl w-full">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8 text-center">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                Product Search
+            </span>
+        </h1>
+
+        <!-- Search Input Section -->
+        <div class="flex flex-col sm:flex-row items-center justify-center mb-8 space-y-4 sm:space-y-0 sm:space-x-4">
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search for products..."
+                class="flex-grow p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out w-full sm:w-auto"
+            >
+            <button
+                id="searchButton"
+                class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out w-full sm:w-auto"
+            >
+                Search
+            </button>
+        </div>
+
+        <!-- Product Results Section -->
+        <div id="productResults" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Product cards will be dynamically inserted here -->
+            <p class="text-center text-gray-500 col-span-full" id="initialMessage">
+                Start typing to find your favorite outdoor gear!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Mock product data to simulate a database or API response
+        const products = [
+            { id: 1, name: "Sleeping Bag - Ultralight", category: "Sleeping Gear", price: 150.00, description: "Lightweight and warm, perfect for backpacking.", imageUrl: "https://placehold.co/400x300/60A5FA/FFFFFF?text=Sleeping+Bag" },
+            { id: 2, name: "Tent - 2 Person Backpacking", category: "Shelters", price: 220.00, description: "Easy to set up, spacious for two.", imageUrl: "https://placehold.co/400x300/34D399/FFFFFF?text=Tent" },
+            { id: 3, name: "Hiking Boots - Waterproof", category: "Footwear", price: 120.00, description: "Durable and comfortable for all terrains.", imageUrl: "https://placehold.co/400x300/FBBF24/FFFFFF?text=Hiking+Boots" },
+            { id: 4, name: "Backpack - 60L Expedition", category: "Packs", price: 180.00, description: "Large capacity for extended trips.", imageUrl: "https://placehold.co/400x300/EAB308/FFFFFF?text=Backpack" },
+            { id: 5, name: "Camping Stove - Portable", category: "Cooking Gear", price: 75.00, description: "Compact and efficient for outdoor cooking.", imageUrl: "https://placehold.co/400x300/EF4444/FFFFFF?text=Camping+Stove" },
+            { id: 6, name: "Headlamp - Rechargeable", category: "Lighting", price: 30.00, description: "Bright and long-lasting illumination.", imageUrl: "https://placehold.co/400x300/8B5CF6/FFFFFF?text=Headlamp" },
+            { id: 7, name: "Water Filter - Portable", category: "Hydration", price: 50.00, description: "Ensures clean drinking water on the go.", imageUrl: "https://placehold.co/400x300/10B981/FFFFFF?text=Water+Filter" },
+            { id: 8, name: "Camping Chair - Foldable", category: "Furniture", price: 45.00, description: "Comfortable and easy to transport.", imageUrl: "https://placehold.co/400x300/EC4899/FFFFFF?text=Camping+Chair" },
+            { id: 9, name: "First Aid Kit - Wilderness", category: "Safety", price: 35.00, description: "Essential supplies for outdoor emergencies.", imageUrl: "https://placehold.co/400x300/6B7280/FFFFFF?text=First+Aid+Kit" },
+            { id: 10, name: "Trekking Poles - Adjustable", category: "Accessories", price: 60.00, description: "Provides stability and reduces strain.", imageUrl: "https://placehold.co/400x300/F97316/FFFFFF?text=Trekking+Poles" }
+        ];
+
+        // Get references to DOM elements
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const productResults = document.getElementById('productResults');
+        const initialMessage = document.getElementById('initialMessage');
+
+        /**
+         * Renders a list of products to the DOM.
+         * @param {Array<Object>} productsToDisplay - An array of product objects to render.
+         */
+        function renderProducts(productsToDisplay) {
+            // Clear previous results
+            productResults.innerHTML = '';
+
+            // If no products are found, display a message
+            if (productsToDisplay.length === 0) {
+                productResults.innerHTML = `
+                    <p class="text-center text-gray-500 col-span-full p-4">
+                        No products found matching your search. Try a different query!
+                    </p>
+                `;
+                return; // Exit the function
+            }
+
+            // Iterate over each product and create its HTML card
+            productsToDisplay.forEach(product => {
+                const productCard = `
+                    <div class="bg-gray-50 p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out flex flex-col items-center text-center">
+                        <img
+                            src="${product.imageUrl}"
+                            alt="${product.name}"
+                            class="w-full h-48 object-cover rounded-md mb-4 border border-gray-200"
+                            onerror="this.onerror=null; this.src='https://placehold.co/400x300/CCCCCC/000000?text=Image+Not+Found';"
+                        >
+                        <h2 class="text-xl font-semibold text-gray-800 mb-2">${product.name}</h2>
+                        <p class="text-sm text-gray-600 mb-1">${product.category}</p>
+                        <p class="text-lg font-bold text-blue-700 mb-3">$${product.price.toFixed(2)}</p>
+                        <p class="text-sm text-gray-700 flex-grow mb-4">${product.description}</p>
+                        <button class="mt-auto px-4 py-2 bg-purple-600 text-white font-medium rounded-md hover:bg-purple-700 transition duration-200 ease-in-out">
+                            View Details
+                        </button>
+                    </div>
+                `;
+                // Append the created card HTML to the results container
+                productResults.innerHTML += productCard;
+            });
+        }
+
+        /**
+         * Performs the search operation based on the input value.
+         */
+        function performSearch() {
+            const query = searchInput.value.toLowerCase().trim(); // Get input value, convert to lowercase, and trim whitespace
+
+            // Hide the initial message once a search is performed
+            if (initialMessage) {
+                initialMessage.classList.add('hidden');
+            }
+
+            // If the query is empty, display all products
+            if (query === '') {
+                renderProducts(products);
+                return;
+            }
+
+            // Filter products based on the query matching name, category, or description
+            const filteredProducts = products.filter(product =>
+                product.name.toLowerCase().includes(query) ||
+                product.category.toLowerCase().includes(query) ||
+                product.description.toLowerCase().includes(query)
+            );
+
+            // Render the filtered products
+            renderProducts(filteredProducts);
+        }
+
+        // Event listener for the search button click
+        searchButton.addEventListener('click', performSearch);
+
+        // Event listener for pressing 'Enter' key in the search input field
+        searchInput.addEventListener('keypress', function(event) {
+            // Check if the pressed key is 'Enter' (key code 13)
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default form submission behavior
+                performSearch(); // Trigger the search
+            }
+        });
+
+        // Optional: Render all products initially when the page loads
+        // This gives the user an immediate view of available products.
+        // You can comment this out if you prefer an empty state until search.
+        // window.onload = () => {
+        //     renderProducts(products);
+        //     if (initialMessage) {
+        //         initialMessage.classList.add('hidden'); // Hide message if products are rendered
+        //     }
+        // };
+    </script>
+</body>
+</html>
