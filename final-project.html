@@ -1,79 +1,512 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WDD 330 Final Project – Adiele Edwin Obinna</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GastroMix — Recipes & Cocktails Explorer By Adiele Edwin Obinna</title>
+  <meta name="description" content="Search world recipes and cocktails using TheMealDB and TheCocktailDB. Save favorites, switch themes, and explore step-by-step details." />
+  <link rel="icon" href="data:," />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      padding: 2rem;
-      max-width: 900px;
-      margin: auto;
-      line-height: 1.6;
+    :root {
+      --bg: #0b1020;
+      --card: #121a33;
+      --text: #e6ecff;
+      --muted: #a0b1d1;
+      --accent: #62d6ff;
+      --accent-2: #ff9bd2;
+      --ring: rgba(98, 214, 255, 0.35);
+      --border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 25px rgba(0,0,0,.35);
     }
-    h1 {
-      color: #2c3e50;
+    html[data-theme="light"]{
+      --bg:#f6f8ff; --card:#ffffff; --text:#14213d; --muted:#4a5568;
+      --accent:#1f7ae0; --accent-2:#d62b70; --ring:rgba(31,122,224,.25); --border:rgba(0,0,0,.15);
     }
-    a {
-      color: #3498db;
-      text-decoration: none;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(98,214,255,.08), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(255,155,210,.08), transparent 60%),
+        var(--bg);
+      min-height:100vh;
     }
-    a:hover {
-      text-decoration: underline;
+    a{color:var(--accent)}
+    .sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+    header.site-header, footer.site-footer{
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:1rem 1.25rem;
+      position:sticky; top:0; z-index:10; backdrop-filter: blur(8px);
+      background: color-mix(in oklab, var(--bg) 85%, transparent);
+      border-bottom:1px solid var(--border);
     }
-    .section {
-      margin-bottom: 2rem;
+    footer.site-footer{
+      position:static; border-top:1px solid var(--border); border-bottom:0; justify-content:center; margin-top:2rem;
+      background:none; text-align:center;
     }
-    .btn {
-      display: inline-block;
-      margin: 0.5rem 1rem 0.5rem 0;
-      padding: 0.5rem 1rem;
-      background-color: #3498db;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
+    .brand{font-weight:800; letter-spacing:.4px}
+    .brand.accent{color:var(--accent)}
+    .top-actions{display:flex; gap:.5rem; flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--border); background:linear-gradient(180deg, color-mix(in oklab, var(--card) 80%, #000 10%), var(--card));
+      color:var(--text); padding:.55rem .85rem; border-radius:.9rem; cursor:pointer; box-shadow:var(--shadow);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
     }
-    iframe {
-      width: 100%;
-      height: 315px;
-      border: none;
+    .btn:hover{transform:translateY(-1px); border-color:var(--accent); box-shadow:0 8px 24px rgba(0,0,0,.45), 0 0 0 4px var(--ring)}
+    .btn.icon{padding:.45rem .6rem}
+    .btn.ghost{background:transparent}
+    .btn.outline{background:transparent; border-style:dashed}
+    main{max-width:1100px; margin:0 auto; padding:1rem}
+    .controls{display:grid; gap:.9rem}
+    .tabstrip{display:inline-flex; gap:.5rem; align-items:center}
+    .tab{background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.45rem 1rem; cursor:pointer; transition: background .18s, transform .18s, border-color .18s}
+    .tab.active, .tab:hover{background: color-mix(in oklab, var(--accent) 22%, transparent); border-color:var(--accent); transform:translateY(-1px)}
+    .searchbar{display:grid; grid-template-columns: 1fr auto auto auto; gap:.5rem}
+    .searchbar input{
+      width:100%; padding:.65rem .85rem; border-radius:.9rem; border:1px solid var(--border);
+      background:var(--card); color:var(--text); transition: box-shadow .2s, border-color .2s;
+    }
+    .searchbar input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--ring)}
+    .filters{display:grid; gap:.5rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))}
+    .filters label{display:grid; gap:.25rem}
+    .filters select{padding:.55rem .7rem; border-radius:.7rem; border:1px solid var(--border); background:var(--card); color:var(--text)}
+    .section-title{display:flex; align-items:baseline; gap:.75rem; margin:1rem 0 .5rem}
+    .grid{display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))}
+    .card{
+      background:linear-gradient(180deg, color-mix(in oklab, var(--card) 90%, #000 5%), var(--card));
+      border:1px solid var(--border); border-radius:1rem; overflow:hidden; box-shadow:var(--shadow); display:grid; grid-template-rows: 160px auto auto;
+      transition: transform .2s ease;
+    }
+    .card:hover{transform: translateY(-2px)}
+    .card img{width:100%; height:160px; object-fit:cover; display:block}
+    .card .content{padding:.75rem .85rem}
+    .card h3{margin:.2rem 0 .2rem; font-size:1.05rem}
+    .meta{color:var(--muted); font-size:.9rem}
+    .actions{display:flex; gap:.4rem; padding:.6rem .7rem}
+    .actions .btn{flex:1}
+    .empty{text-align:center; opacity:.85; padding:2rem 0}
+    dialog.modal{border:0; border-radius:1rem; padding:0; width:min(900px, 96vw); color:var(--text)}
+    dialog.modal::backdrop{background:rgba(0,0,0,.6); backdrop-filter: blur(1px)}
+    .modal-header, .modal-footer{padding:.8rem 1rem; background:var(--card); display:flex; align-items:center; justify-content:space-between; gap:.75rem}
+    .modal-body{padding:1rem; background:linear-gradient(180deg, color-mix(in oklab, var(--card) 95%, #000 3%), var(--card))}
+    .detail{display:grid; grid-template-columns: 280px 1fr; gap:1rem}
+    .detail img{width:100%; height:240px; object-fit:cover; border-radius:.7rem}
+    .kv{display:grid; grid-template-columns:max-content 1fr; gap:.25rem .5rem}
+    .kv dt{color:var(--muted)}
+    .tags{display:flex; flex-wrap:wrap; gap:.35rem; margin:.3rem 0}
+    .tag{padding:.2rem .45rem; border:1px solid var(--border); border-radius:.55rem; font-size:.85rem}
+    .instructions{white-space: pre-wrap}
+    .hide{display:none !important}
+    @media (max-width:760px){
+      .searchbar{grid-template-columns: 1fr auto auto}
+      .detail{grid-template-columns: 1fr}
+      header.site-header{flex-wrap:wrap}
     }
   </style>
 </head>
 <body>
+  <header class="site-header">
+    <h1 aria-label="GastroMix">
+      <a href="./index.html"><span class="brand">Gastro</span><span class="brand accent">Mix</span></a>
+    </h1>
+    <nav class="top-actions" aria-label="primary">
+      <button id="themeToggle" class="btn icon" aria-pressed="false" aria-label="Toggle dark mode">🌓</button>
+      <button id="favoritesToggle" class="btn" aria-expanded="false" title="Show favorites">★ Favorites</button>
+      <a id="appLink" class="btn outline" href="https://edwinadiele.github.io/wdd330/final-project.html" target="_blank" rel="noopener">Live App</a>
+      <a id="sourceLink" class="btn outline" href="https://github.com/edwinadiele/wdd330/blob/main/final-project.html" target="_blank" rel="noopener">Source</a>
+      <a id="trelloLink" class="btn outline" href="https://www.loom.com/share/65e9a9ed8e5a4f2e8c8324123b77b95f?sid=0ed23657-02f7-4f94-9a3e-e406bf3a60c7" target="_blank" rel="noopener">Trello</a>
+    </nav>
+  </header>
 
-  <h1>WDD 330: Final Project Submission</h1>
+  <main>
+    <section class="controls" aria-labelledby="controls-title">
+      <h2 id="controls-title" class="sr-only">Search & Filters</h2>
 
-  <div class="section">
-    <strong>Name:</strong> Adiele Edwin Obinna<br />
-    <strong>Project Title:</strong> Sleep Outside – Outdoor Gear Web Application
-  </div>
+      <div class="tabstrip" role="tablist" aria-label="Content type">
+        <button role="tab" aria-selected="true" id="tab-meals" class="tab active" data-type="meals">🍽️ Recipes</button>
+        <button role="tab" aria-selected="false" id="tab-cocktails" class="tab" data-type="cocktails">🍹 Cocktails</button>
+      </div>
 
-  <div class="section">
-    <h2>Project Links</h2>
-    <ul>
-      <li><strong>Live Site:</strong> <a href="https://edwinadiele.github.io/wdd330/final-project.html" target="_blank">https://my-final-project.github.io</a></li>
-      <li><strong>Source Code:</strong> <a href="https://github.com/edwinadiele/wdd330/blob/main/final-project.html" target="_blank">https://github.com/edwinadiele/wdd330</a></li>
-      <li><strong>Trello Board:</strong> <a href="https://trello.com/b/999999/yourprojecttitle" target="_blank">https://trello.com/b/999999/yourprojecttitle</a></li>
-    </ul>
-  </div>
+      <form id="searchForm" class="searchbar" role="search" aria-label="Search recipes or cocktails">
+        <label class="sr-only" for="q">Search</label>
+        <input id="q" name="q" type="search" placeholder="Search by name or ingredient…" autocomplete="off" />
+        <button class="btn" type="submit">Search</button>
+        <button class="btn ghost" id="randomBtn" type="button" title="Random pick">🎲 Random</button>
+        <button class="btn ghost" id="clearBtn" type="button">Clear</button>
+      </form>
 
-  <div class="section">
-    <h2>Download Documents</h2>
-    <a href="wdd330-professional-development.docx" target="_blank" class="btn" download>📄 Professional Development Document</a>
-    <a href="wdd330-skill-development.docx" target="_blank" class="btn" download>📄 Skills Development Document</a>
-  </div>
+      <div class="filters">
+        <label>
+          <span>Category</span>
+          <select id="categorySelect" aria-label="Category"></select>
+        </label>
+        <label id="areaWrapper">
+          <span>Area</span>
+          <select id="areaSelect" aria-label="Area / Origin"></select>
+        </label>
+      </div>
+    </section>
 
-  <div class="section">
-    <h2>Final Project Video</h2>
-    <p>You can watch my 5-minute walkthrough video below:</p>
-    <iframe width="300" height="688" src="https://www.loom.com/embed/65e9a9ed8e5a4f2e8c8324123b77b95f?sid=22d09b95-7455-4d8e-a0d2-067e06c2c613" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-  </div>
+    <section class="results" aria-live="polite">
+      <h2 class="section-title"><span id="resultHeading">Results</span> <small id="resultCount" aria-live="polite"></small></h2>
+      <div id="grid" class="grid" role="list"></div>
+      <div id="emptyState" class="empty" hidden>
+        <p>No results. Try a different search or filters.</p>
+      </div>
+    </section>
+  </main>
 
-  <footer class="section">
-    <p>© 2025 Adiele Edwin Obinna | BYU–Idaho | WDD 330</p>
+  <dialog id="detailDialog" class="modal" aria-labelledby="modalTitle">
+    <form method="dialog">
+      <header class="modal-header">
+        <h3 id="modalTitle">Details</h3>
+        <button class="btn icon" value="close" aria-label="Close">✖</button>
+      </header>
+      <div id="modalBody" class="modal-body"></div>
+      <footer class="modal-footer">
+        <button class="btn" value="close">Close</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <footer class="site-footer">
+    <p>
+      <a href="https://www.themealdb.com/api.php" target="_blank" rel="noopener">TheMeal</a> &
+      <a href="https://www.thecocktaildb.com/api.php" target="_blank" rel="noopener">TheCocktail</a> 
+      <span id="year"></span> — Adiele Edwin Obinna Final Project
+    </p>
   </footer>
+
+  <script>
+    // ====== Simple persistent state ======
+    const STORAGE_KEY = 'gastromix:v2';
+    const defaults = {
+      theme: 'dark',
+      favorites: { meals: [], cocktails: [] },
+      last: { type: 'meals', q: '', category: 'All', area: 'All' }
+    };
+    const loadState = () => {
+      try { return { ...defaults, ...JSON.parse(localStorage.getItem(STORAGE_KEY)) }; }
+      catch { return structuredClone(defaults); }
+    };
+    const saveState = (s) => localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    let state = loadState();
+
+    // ====== Elements ======
+    const els = {
+      tabs: {
+        meals: document.getElementById('tab-meals'),
+        cocktails: document.getElementById('tab-cocktails')
+      },
+      q: document.getElementById('q'),
+      category: document.getElementById('categorySelect'),
+      area: document.getElementById('areaSelect'),
+      areaWrapper: document.getElementById('areaWrapper'),
+      searchForm: document.getElementById('searchForm'),
+      randomBtn: document.getElementById('randomBtn'),
+      clearBtn: document.getElementById('clearBtn'),
+      themeToggle: document.getElementById('themeToggle'),
+      favoritesToggle: document.getElementById('favoritesToggle'),
+      resultHeading: document.getElementById('resultHeading'),
+      resultCount: document.getElementById('resultCount'),
+      grid: document.getElementById('grid'),
+      emptyState: document.getElementById('emptyState'),
+      dialog: document.getElementById('detailDialog'),
+      modalTitle: document.getElementById('modalTitle'),
+      modalBody: document.getElementById('modalBody')
+    };
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+    // You can set these to your real links before submitting
+    document.getElementById('appLink').href = location.href;
+    document.getElementById('sourceLink').href = 'https://github.com/your-username/your-repo';
+    document.getElementById('trelloLink').href = 'https://trello.com/b/your-board-id';
+
+    // ====== Theme ======
+    function applyTheme(theme){
+      document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+      els.themeToggle.setAttribute('aria-pressed', String(theme === 'dark'));
+      els.themeToggle.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+    applyTheme(state.theme);
+    els.themeToggle.addEventListener('click', () => {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      saveState(state);
+      applyTheme(state.theme);
+    });
+
+    // ====== APIs ======
+    const MEAL_BASE = 'https://www.themealdb.com/api/json/v1/1';
+    const COCKTAIL_BASE = 'https://www.thecocktaildb.com/api/json/v1/1';
+    const j = (url) => fetch(url).then(r => r.json());
+
+    // Meals
+    const mealCategories = () => j(`${MEAL_BASE}/list.php?c=list`).then(x => ['All', ...(x.meals||[]).map(m => m.strCategory)]);
+    const mealAreas = () => j(`${MEAL_BASE}/list.php?a=list`).then(x => ['All', ...(x.meals||[]).map(m => m.strArea)]);
+    const mealSearch = (q) => j(`${MEAL_BASE}/search.php?s=${encodeURIComponent(q)}`).then(x => (x.meals||[]).map(normalizeMeal));
+    const mealFilter = async (category, area) => {
+      // If both set, fetch category list, then hydrate and filter by area (limit to 40 for speed)
+      if (category && category !== 'All') {
+        const list = await j(`${MEAL_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(x => x.meals || []);
+        if (area && area !== 'All') {
+          const detailed = await Promise.all(list.slice(0, 40).map(m => mealLookup(m.idMeal)));
+          return detailed.filter(d => d.area === area);
+        }
+        return list.map(m => ({ id:m.idMeal, name:m.strMeal, thumb:m.strMealThumb, category, area:undefined }));
+      }
+      if (area && area !== 'All') {
+        const list = await j(`${MEAL_BASE}/filter.php?a=${encodeURIComponent(area)}`).then(x => x.meals || []);
+        return list.map(m => ({ id:m.idMeal, name:m.strMeal, thumb:m.strMealThumb, area }));
+      }
+      // default sample
+      const list = await j(`${MEAL_BASE}/filter.php?c=Beef`).then(x => x.meals || []);
+      return list.map(m => ({ id:m.idMeal, name:m.strMeal, thumb:m.strMealThumb }));
+    };
+    const mealRandom = () => j(`${MEAL_BASE}/random.php`).then(x => normalizeMeal(x.meals[0]));
+    const mealLookup = (id) => j(`${MEAL_BASE}/lookup.php?i=${id}`).then(x => normalizeMeal(x.meals?.[0]));
+
+    function normalizeMeal(raw){
+      if (!raw) return null;
+      const ingredients = [];
+      for (let i=1;i<=20;i++){
+        const n = raw[`strIngredient${i}`]; const m = raw[`strMeasure${i}`];
+        if (n && n.trim()) ingredients.push({ name:n.trim(), measure:(m||'').trim() });
+      }
+      return {
+        id: raw.idMeal, type: 'meals',
+        name: raw.strMeal, category: raw.strCategory, area: raw.strArea,
+        instructions: raw.strInstructions, thumb: raw.strMealThumb,
+        tags: (raw.strTags||'').split(',').filter(Boolean),
+        youtube: raw.strYoutube, source: raw.strSource,
+        ingredients
+      };
+    }
+
+    // Cocktails
+    const cocktailCategories = () => j(`${COCKTAIL_BASE}/list.php?c=list`).then(x => ['All', ...(x.drinks||[]).map(d => d.strCategory)]);
+    const cocktailSearch = (q) => j(`${COCKTAIL_BASE}/search.php?s=${encodeURIComponent(q)}`).then(x => (x.drinks||[]).map(normalizeCocktail));
+    const cocktailFilter = (category) => {
+      if (category && category !== 'All') {
+        return j(`${COCKTAIL_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(x => (x.drinks||[]).map(d => ({ id:d.idDrink, name:d.strDrink, thumb:d.strDrinkThumb })));
+      }
+      return j(`${COCKTAIL_BASE}/filter.php?c=Cocktail`).then(x => (x.drinks||[]).map(d => ({ id:d.idDrink, name:d.strDrink, thumb:d.strDrinkThumb })));
+    };
+    const cocktailRandom = () => j(`${COCKTAIL_BASE}/random.php`).then(x => normalizeCocktail(x.drinks[0]));
+    const cocktailLookup = (id) => j(`${COCKTAIL_BASE}/lookup.php?i=${id}`).then(x => normalizeCocktail(x.drinks?.[0]));
+
+    function normalizeCocktail(raw){
+      if (!raw) return null;
+      const ingredients = [];
+      for (let i=1;i<=15;i++){
+        const n = raw[`strIngredient${i}`]; const m = raw[`strMeasure${i}`];
+        if (n && n.trim()) ingredients.push({ name:n.trim(), measure:(m||'').trim() });
+      }
+      return {
+        id: raw.idDrink, type: 'cocktails',
+        name: raw.strDrink, category: raw.strCategory, alcoholic: raw.strAlcoholic, glass: raw.strGlass,
+        instructions: raw.strInstructions, thumb: raw.strDrinkThumb,
+        tags: (raw.strTags||'').split(',').filter(Boolean),
+        ingredients
+      };
+    }
+
+    // ====== UI helpers ======
+    function setOptions(select, values, selected){
+      select.innerHTML = '';
+      for (const v of values){
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        if (v === selected) o.selected = true;
+        select.appendChild(o);
+      }
+    }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+    // ====== Tabs ======
+    let showingFavorites = false;
+    function currentType(){ return state.last.type || 'meals'; }
+    function switchType(type){
+      state.last.type = type; saveState(state);
+      for (const [t,btn] of Object.entries(els.tabs)){
+        btn.classList.toggle('active', t===type);
+        btn.setAttribute('aria-selected', String(t===type));
+      }
+      els.areaWrapper.classList.toggle('hide', type !== 'meals'); // Area only for meals
+      els.resultHeading.textContent = type === 'meals' ? 'Recipes' : 'Cocktails';
+      loadFilters(type).then(runQuery);
+    }
+    els.tabs.meals.addEventListener('click', () => switchType('meals'));
+    els.tabs.cocktails.addEventListener('click', () => switchType('cocktails'));
+
+    // ====== Filters ======
+    async function loadFilters(type){
+      if (type === 'meals'){
+        const [cats, ars] = await Promise.all([mealCategories(), mealAreas()]);
+        setOptions(els.category, cats, state.last.category || 'All');
+        setOptions(els.area, ars, state.last.area || 'All');
+      } else {
+        const cats = await cocktailCategories();
+        setOptions(els.category, cats, state.last.category || 'All');
+        setOptions(els.area, ['All'], 'All'); // placeholder; hidden via CSS
+      }
+    }
+    els.category.addEventListener('change', () => {
+      state.last.category = els.category.value; saveState(state); runQuery();
+    });
+    els.area.addEventListener('change', () => {
+      state.last.area = els.area.value; saveState(state); runQuery();
+    });
+
+    // ====== Search / Random / Clear ======
+    els.searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      state.last.q = els.q.value.trim(); saveState(state);
+      runQuery();
+    });
+    els.randomBtn.addEventListener('click', async () => {
+      const type = currentType();
+      const data = type==='meals' ? await mealRandom() : await cocktailRandom();
+      openDetail(type, data.id);
+    });
+    els.clearBtn.addEventListener('click', () => {
+      els.q.value = '';
+      state.last.q = '';
+      state.last.category = 'All';
+      state.last.area = 'All';
+      saveState(state);
+      loadFilters(currentType()).then(runQuery);
+    });
+
+    // ====== Favorites Toggle ======
+    els.favoritesToggle.addEventListener('click', () => {
+      showingFavorites = !showingFavorites;
+      els.favoritesToggle.setAttribute('aria-expanded', String(showingFavorites));
+      runQuery();
+    });
+
+    // ====== Render Grid ======
+    function renderGrid(type, items){
+      els.grid.innerHTML = '';
+      if (!items || !items.length){
+        els.emptyState.hidden = false;
+        els.resultCount.textContent = '';
+        return;
+      }
+      els.emptyState.hidden = true;
+      els.resultCount.textContent = `(${items.length})`;
+
+      for (const it of items){
+        const id = it.id || it.idMeal || it.idDrink;
+        const name = it.name || it.strMeal || it.strDrink;
+        const thumb = it.thumb || it.strMealThumb || it.strDrinkThumb;
+        const meta = it.category || it.strCategory || it.alcoholic || '';
+        const saved = new Set(state.favorites[type]).has(id);
+
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.setAttribute('role','listitem');
+        card.innerHTML = `
+          <img alt="" loading="lazy" src="${thumb}">
+          <div class="content">
+            <h3>${escapeHtml(name)}</h3>
+            <div class="meta">${escapeHtml(meta || '')}</div>
+          </div>
+          <div class="actions">
+            <button class="btn" data-open data-id="${id}">Details</button>
+            <button class="btn" data-fav data-id="${id}" aria-pressed="${String(saved)}">${saved ? '★ Saved' : '☆ Save'}</button>
+          </div>
+        `;
+        card.querySelector('[data-open]').addEventListener('click', () => openDetail(type, id));
+        card.querySelector('[data-fav]').addEventListener('click', (e) => {
+          const next = toggleFavorite(type, id);
+          e.currentTarget.setAttribute('aria-pressed', String(next.includes(id)));
+          e.currentTarget.textContent = next.includes(id) ? '★ Saved' : '☆ Save';
+        });
+        els.grid.appendChild(card);
+      }
+    }
+
+    // ====== Favorites ======
+    function toggleFavorite(type, id){
+      const set = new Set(state.favorites[type]);
+      if (set.has(id)) set.delete(id); else set.add(id);
+      state.favorites[type] = Array.from(set);
+      saveState(state);
+      return state.favorites[type];
+    }
+
+    // ====== Detail Modal ======
+    async function openDetail(type, id){
+      const data = type === 'meals' ? await mealLookup(id) : await cocktailLookup(id);
+      if (!data){ alert('Details not found'); return; }
+
+      els.modalTitle.textContent = data.name;
+      const tags = (data.tags||[]).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ');
+      const list = (data.ingredients||[]).map(i => `<li><strong>${escapeHtml(i.name)}</strong> — ${escapeHtml(i.measure)}</li>`).join('');
+
+      const kv = [];
+      if (type==='meals'){
+        kv.push(['Category', data.category], ['Area', data.area]);
+      } else {
+        kv.push(['Category', data.category], ['Alcoholic', data.alcoholic], ['Glass', data.glass]);
+      }
+
+      els.modalBody.innerHTML = `
+        <div class="detail">
+          <img alt="" src="${data.thumb}"/>
+          <div>
+            <dl class="kv">${kv.map(([k,v])=>`<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v||'')}</dd>`).join('')}</dl>
+            <div class="tags">${tags}</div>
+            <h4>Ingredients</h4>
+            <ul>${list}</ul>
+          </div>
+        </div>
+        <div class="instructions">
+          <h4>Instructions</h4>
+          <p>${escapeHtml(data.instructions||'')}</p>
+          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank" rel="noopener">Watch on YouTube</a></p>` : ''}
+          ${data.source ? `<p><a href="${data.source}" target="_blank" rel="noopener">Source</a></p>` : ''}
+        </div>
+      `;
+      els.dialog.showModal();
+    }
+
+    // ====== Run Query ======
+    async function runQuery(){
+      const type = currentType();
+      const q = state.last.q;
+      const cat = state.last.category || 'All';
+      const area = state.last.area || 'All';
+
+      if (showingFavorites){
+        const ids = state.favorites[type] || [];
+        const lookups = ids.slice(0, 48).map(id => type==='meals' ? mealLookup(id) : cocktailLookup(id));
+        const detailed = (await Promise.all(lookups)).filter(Boolean);
+        renderGrid(type, detailed);
+        return;
+      }
+
+      if (q){
+        const list = type==='meals' ? await mealSearch(q) : await cocktailSearch(q);
+        renderGrid(type, list);
+      } else {
+        if (type==='meals'){
+          const list = await mealFilter(cat, area);
+          renderGrid(type, list);
+        } else {
+          const list = await cocktailFilter(cat);
+          renderGrid(type, list);
+        }
+      }
+    }
+
+    // ====== Init ======
+    (function init(){
+      els.q.value = state.last.q || '';
+      els.dialog.addEventListener('click', (e) => { if (e.target === els.dialog) els.dialog.close(); });
+      switchType(currentType()); // loads filters and triggers first query
+    })();
+  </script>
 </body>
 </html>
