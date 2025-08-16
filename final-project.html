@@ -113,9 +113,9 @@
     <nav class="top-actions" aria-label="primary">
       <button id="themeToggle" class="btn icon" aria-pressed="false" aria-label="Toggle dark mode">🌓</button>
       <button id="favoritesToggle" class="btn" aria-expanded="false" title="Show favorites">★ Favorites</button>
-      <a id="appLink" class="btn outline" href="https://edwinadiele.github.io/wdd330/final-project.html" target="_blank" rel="noopener">Live App</a>
-      <a id="" class="btn outline" href="https://github.com/edwinadiele/wdd330/blob/main/final-project.html" target="_blank" rel="noopener">Source</a>
-      <a id="" class="btn outline" href="https://www.loom.com/share/65e9a9ed8e5a4f2e8c8324123b77b95f?sid=0ed23657-02f7-4f94-9a3e-e406bf3a60c7" target="_blank" rel="noopener">Trello</a>
+      <a id="appLink" class="btn outline" href="#" target="_blank" rel="noopener">Live App</a>
+      <a id="sourceLink" class="btn outline" href="#" target="_blank" rel="noopener">Source</a>
+      <a id="trelloLink" class="btn outline" href="#" target="_blank" rel="noopener">Trello</a>
     </nav>
   </header>
 
@@ -179,7 +179,7 @@
   </footer>
 
   <script>
-    // ====== Simple persistent state ======
+    // ====== Persistent state ======
     const STORAGE_KEY = 'gastromix:v2';
     const defaults = {
       theme: 'dark',
@@ -217,11 +217,11 @@
       modalBody: document.getElementById('modalBody')
     };
 
+    // ====== Footer links ======
     document.getElementById('year').textContent = new Date().getFullYear();
-    // You can set these to your real links before submitting
     document.getElementById('appLink').href = location.href;
-    document.getElementById('sourceLink').href = 'https://github.com/your-username/your-repo';
-    document.getElementById('trelloLink').href = 'https://trello.com/b/your-board-id';
+    document.getElementById('sourceLink').href = 'https://github.com/edwinadiele/wdd330/blob/main/final-project.html';
+    document.getElementById('trelloLink').href = 'https://www.loom.com/share/65e9a9ed8e5a4f2e8c8324123b77b95f';
 
     // ====== Theme ======
     function applyTheme(theme){
@@ -239,19 +239,18 @@
     // ====== APIs ======
     const MEAL_BASE = 'https://www.themealdb.com/api/json/v1/1';
     const COCKTAIL_BASE = 'https://www.thecocktaildb.com/api/json/v1/1';
-    const j = (url) => fetch(url).then(r => r.json());
+    const j = (url) => fetch(url).then(r => r.json()).catch(() => ({}));
 
     // Meals
     const mealCategories = () => j(`${MEAL_BASE}/list.php?c=list`).then(x => ['All', ...(x.meals||[]).map(m => m.strCategory)]);
     const mealAreas = () => j(`${MEAL_BASE}/list.php?a=list`).then(x => ['All', ...(x.meals||[]).map(m => m.strArea)]);
     const mealSearch = (q) => j(`${MEAL_BASE}/search.php?s=${encodeURIComponent(q)}`).then(x => (x.meals||[]).map(normalizeMeal));
     const mealFilter = async (category, area) => {
-      // If both set, fetch category list, then hydrate and filter by area (limit to 40 for speed)
       if (category && category !== 'All') {
         const list = await j(`${MEAL_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(x => x.meals || []);
         if (area && area !== 'All') {
           const detailed = await Promise.all(list.slice(0, 40).map(m => mealLookup(m.idMeal)));
-          return detailed.filter(d => d.area === area);
+          return detailed.filter(d => d && d.area === area);
         }
         return list.map(m => ({ id:m.idMeal, name:m.strMeal, thumb:m.strMealThumb, category, area:undefined }));
       }
@@ -259,19 +258,19 @@
         const list = await j(`${MEAL_BASE}/filter.php?a=${encodeURIComponent(area)}`).then(x => x.meals || []);
         return list.map(m => ({ id:m.idMeal, name:m.strMeal, thumb:m.strMealThumb, area }));
       }
-      // default sample
-      const list = await j(`${MEAL_BASE}/filter.php?c=Beef`).then(x => x.meals || []);
+      // default sample (nice variety)
+      const list = await j(`${MEAL_BASE}/filter.php?c=Chicken`).then(x => x.meals || []);
       return list.map(m => ({ id:m.idMeal, name:m.strMeal, thumb:m.strMealThumb }));
     };
-    const mealRandom = () => j(`${MEAL_BASE}/random.php`).then(x => normalizeMeal(x.meals[0]));
-    const mealLookup = (id) => j(`${MEAL_BASE}/lookup.php?i=${id}`).then(x => normalizeMeal(x.meals?.[0]));
+    const mealRandom = () => j(`${MEAL_BASE}/random.php`).then(x => normalizeMeal(x.meals && x.meals[0]));
+    const mealLookup = (id) => j(`${MEAL_BASE}/lookup.php?i=${id}`).then(x => normalizeMeal(x.meals && x.meals[0]));
 
     function normalizeMeal(raw){
       if (!raw) return null;
       const ingredients = [];
       for (let i=1;i<=20;i++){
         const n = raw[`strIngredient${i}`]; const m = raw[`strMeasure${i}`];
-        if (n && n.trim()) ingredients.push({ name:n.trim(), measure:(m||'').trim() });
+        if (n && String(n).trim()) ingredients.push({ name:String(n).trim(), measure:(m||'').trim() });
       }
       return {
         id: raw.idMeal, type: 'meals',
@@ -286,21 +285,21 @@
     // Cocktails
     const cocktailCategories = () => j(`${COCKTAIL_BASE}/list.php?c=list`).then(x => ['All', ...(x.drinks||[]).map(d => d.strCategory)]);
     const cocktailSearch = (q) => j(`${COCKTAIL_BASE}/search.php?s=${encodeURIComponent(q)}`).then(x => (x.drinks||[]).map(normalizeCocktail));
-    const cocktailFilter = (category) => {
+    const cocktailFilter = async (category) => {
       if (category && category !== 'All') {
         return j(`${COCKTAIL_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(x => (x.drinks||[]).map(d => ({ id:d.idDrink, name:d.strDrink, thumb:d.strDrinkThumb })));
       }
       return j(`${COCKTAIL_BASE}/filter.php?c=Cocktail`).then(x => (x.drinks||[]).map(d => ({ id:d.idDrink, name:d.strDrink, thumb:d.strDrinkThumb })));
     };
-    const cocktailRandom = () => j(`${COCKTAIL_BASE}/random.php`).then(x => normalizeCocktail(x.drinks[0]));
-    const cocktailLookup = (id) => j(`${COCKTAIL_BASE}/lookup.php?i=${id}`).then(x => normalizeCocktail(x.drinks?.[0]));
+    const cocktailRandom = () => j(`${COCKTAIL_BASE}/random.php`).then(x => normalizeCocktail(x.drinks && x.drinks[0]));
+    const cocktailLookup = (id) => j(`${COCKTAIL_BASE}/lookup.php?i=${id}`).then(x => normalizeCocktail(x.drinks && x.drinks[0]));
 
     function normalizeCocktail(raw){
       if (!raw) return null;
       const ingredients = [];
       for (let i=1;i<=15;i++){
         const n = raw[`strIngredient${i}`]; const m = raw[`strMeasure${i}`];
-        if (n && n.trim()) ingredients.push({ name:n.trim(), measure:(m||'').trim() });
+        if (n && String(n).trim()) ingredients.push({ name:String(n).trim(), measure:(m||'').trim() });
       }
       return {
         id: raw.idDrink, type: 'cocktails',
@@ -348,7 +347,7 @@
       } else {
         const cats = await cocktailCategories();
         setOptions(els.category, cats, state.last.category || 'All');
-        setOptions(els.area, ['All'], 'All'); // placeholder; hidden via CSS
+        setOptions(els.area, ['All'], 'All'); // placeholder; hidden via .hide
       }
     }
     els.category.addEventListener('change', () => {
@@ -367,7 +366,7 @@
     els.randomBtn.addEventListener('click', async () => {
       const type = currentType();
       const data = type==='meals' ? await mealRandom() : await cocktailRandom();
-      openDetail(type, data.id);
+      if (data) openDetail(type, data.id);
     });
     els.clearBtn.addEventListener('click', () => {
       els.q.value = '';
@@ -407,7 +406,7 @@
         card.className = 'card';
         card.setAttribute('role','listitem');
         card.innerHTML = `
-          <img alt="" loading="lazy" src="${thumb}">
+          <img alt="${escapeHtml(name)}" loading="lazy" src="${thumb}">
           <div class="content">
             <h3>${escapeHtml(name)}</h3>
             <div class="meta">${escapeHtml(meta || '')}</div>
@@ -433,6 +432,7 @@
       if (set.has(id)) set.delete(id); else set.add(id);
       state.favorites[type] = Array.from(set);
       saveState(state);
+      if (showingFavorites) runQuery(); // live update when viewing favorites
       return state.favorites[type];
     }
 
@@ -454,7 +454,7 @@
 
       els.modalBody.innerHTML = `
         <div class="detail">
-          <img alt="" src="${data.thumb}"/>
+          <img alt="${escapeHtml(data.name)}" src="${data.thumb}"/>
           <div>
             <dl class="kv">${kv.map(([k,v])=>`<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v||'')}</dd>`).join('')}</dl>
             <div class="tags">${tags}</div>
@@ -479,25 +479,30 @@
       const cat = state.last.category || 'All';
       const area = state.last.area || 'All';
 
-      if (showingFavorites){
-        const ids = state.favorites[type] || [];
-        const lookups = ids.slice(0, 48).map(id => type==='meals' ? mealLookup(id) : cocktailLookup(id));
-        const detailed = (await Promise.all(lookups)).filter(Boolean);
-        renderGrid(type, detailed);
-        return;
-      }
+      try{
+        if (showingFavorites){
+          const ids = state.favorites[type] || [];
+          if (!ids.length){ renderGrid(type, []); return; }
+          const lookups = ids.slice(0, 48).map(id => type==='meals' ? mealLookup(id) : cocktailLookup(id));
+          const detailed = (await Promise.all(lookups)).filter(Boolean);
+          renderGrid(type, detailed);
+          return;
+        }
 
-      if (q){
-        const list = type==='meals' ? await mealSearch(q) : await cocktailSearch(q);
-        renderGrid(type, list);
-      } else {
-        if (type==='meals'){
-          const list = await mealFilter(cat, area);
+        if (q){
+          const list = type==='meals' ? await mealSearch(q) : await cocktailSearch(q);
           renderGrid(type, list);
         } else {
-          const list = await cocktailFilter(cat);
-          renderGrid(type, list);
+          if (type==='meals'){
+            const list = await mealFilter(cat, area);
+            renderGrid(type, list);
+          } else {
+            const list = await cocktailFilter(cat);
+            renderGrid(type, list);
+          }
         }
+      } catch {
+        renderGrid(type, []);
       }
     }
 
@@ -505,6 +510,7 @@
     (function init(){
       els.q.value = state.last.q || '';
       els.dialog.addEventListener('click', (e) => { if (e.target === els.dialog) els.dialog.close(); });
+      els.dialog.addEventListener('keydown', (e) => { if (e.key === 'Escape') els.dialog.close(); });
       switchType(currentType()); // loads filters and triggers first query
     })();
   </script>
